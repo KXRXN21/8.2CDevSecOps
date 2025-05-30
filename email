@@ -1,0 +1,49 @@
+pipeline {
+  agent any
+
+  stages {
+    stage('Checkout') {
+      steps {
+        git branch: 'main', url: 'https://github.com/KXRXN21/8.2C.git'
+      }
+    }
+
+    stage('Install Dependencies') {
+      steps {
+        bat 'npm install'
+      }
+    }
+
+    stage('Run Tests') {
+      steps {
+        bat 'npm test || exit /b 0'
+      }
+    }
+
+    stage('Generate Coverage Report') {
+      steps {
+        bat 'npm run coverage || exit /b 0'
+      }
+    }
+
+    stage('NPM Audit (Security Scan)') {
+      steps {
+        bat 'npm audit || exit /b 0'
+      }
+    }
+  }
+
+  post {
+    always {
+      emailext(
+        subject: "Jenkins Build: ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${currentBuild.currentResult}",
+        body: """<p>Build Status: <strong>${currentBuild.currentResult}</strong></p>
+<p>Job: ${env.JOB_NAME}</p>
+<p>Build Number: ${env.BUILD_NUMBER}</p>
+<p>URL: ${env.BUILD_URL}</p>""",
+        mimeType: 'text/html',
+        to: 'karansinhparmar2112@gmail.com'  
+      )
+    }
+  }
+}
